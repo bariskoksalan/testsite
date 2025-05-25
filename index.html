@@ -7,124 +7,18 @@
 <!-- Augur AI A/B Testing Snippet -->
 <script>
   (function() {
-    const snippetId = 's_quzn0wok65k';
-    const config = {
-      snippetId: snippetId,
-      apiUrl: 'https://3000-idx-abtest-1744303883733.cluster-76blnmxvvzdpat4inoxk5tmzik.cloudworkstations.dev',
-      visitorId: localStorage.getItem('augur_visitor_id') || 
-        (localStorage.setItem('augur_visitor_id', 'v_' + Math.random().toString(36).substring(2, 15)), 
-         localStorage.getItem('augur_visitor_id')),
-      lastRequestTime: 0,
-      rateLimit: 1000 // 1 second between requests
+    window.AugurAI = window.AugurAI || {};
+    window.AugurAI.snippetId = 's_k598dp5ehh';
+    window.AugurAI.mode = 'live';
+    
+    // Load the main script from server
+    const script = document.createElement('script');
+    script.src = 'http://localhost:3000/js/augur-ai.js?v=' + Date.now();
+    script.async = true;
+    script.onerror = function() {
+      console.warn('Augur AI: Failed to load script from server');
     };
-
-    // Rate limiting
-    const canMakeRequest = () => {
-      const now = Date.now();
-      if (now - config.lastRequestTime < config.rateLimit) return false;
-      config.lastRequestTime = now;
-      return true;
-    };
-
-    let currentMode = 'live';
-    // Check for preview mode override
-    if (window.location.search.includes('ab_editor_preview=true')) {
-      currentMode = 'iframe';
-    }
-    let originalState = {};
-
-    const revertChanges = () => {
-        for (const selector in originalState) {
-            const element = document.querySelector(selector);
-            if (element) {
-                if (originalState[selector].content !== undefined) {
-                    element.innerHTML = originalState[selector].content;
-                }
-                if (originalState[selector].style) {
-                    for (const property in originalState[selector].style) {
-                        element.style[property] = originalState[selector].style[property];
-                    }
-                }
-            }
-        }
-        originalState = {};
-    };
-
-    const applyChangesDirectly = (changesToApply = []) => {
-        revertChanges();
-        changesToApply.forEach(change => {
-            const element = document.querySelector(change.selector);
-            if (element) {
-                if (!originalState[change.selector]) {
-                    originalState[change.selector] = {};
-                    originalState[change.selector].content = element.innerHTML || element.textContent;
-                    originalState[change.selector].style = {};
-                    for (const property in element.style) {
-                        originalState[change.selector].style[property] = element.style[property];
-                    }
-                }
-
-                if (change.action === 'setText') {
-                    element.textContent = change.value;
-                } else if (change.action === 'setStyle') {
-                    element.style[change.property] = change.value;
-                }
-            }
-        });
-    };
-
-    if (currentMode === 'iframe') {
-        window.addEventListener('message', event => {
-            if (event.origin !== config.apiUrl) return;
-            if (event.data.type === 'APPLY_CHANGES') {
-                applyChangesDirectly(event.data.changes);
-            }
-        });
-    } else if (mode === 'screenshot') {
-        applyChangesDirectly(changesToApply);
-    } else {
-        const fetchConfig = async () => {
-            if (!canMakeRequest()) return;
-            try {
-                const response = await fetch(`${config.apiUrl}/js/config?snippetId=${snippetId}`);
-                if (!response.ok) throw new Error('Failed to fetch config');
-                const data = await response.json();
-                applyVariants(data);
-            } catch (error) {
-                console.error('Augur AI: Error fetching config:', error);
-            }
-        };
-
-        const applyVariants = (experiments) => {
-            experiments.forEach(exp => {
-                const variant = exp.variants[Math.floor(Math.random() * exp.variants.length)];
-                if (variant && variant.changes_json) {
-                    applyChangesDirectly(variant.changes_json);
-                }
-            });
-        };
-
-        const track = async (eventName, data = {}) => {
-            if (!canMakeRequest()) return;
-            try {
-                await fetch(`${config.apiUrl}/track/event`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        snippetId,
-                        visitorId: config.visitorId,
-                        eventName,
-                        ...data
-                    })
-                });
-            } catch (error) {
-                console.error('Augur AI: Error tracking event:', error);
-            }
-        };
-
-        fetchConfig();
-        window.AugurAI = { track };
-    }
+    document.head.appendChild(script);
   })();
 </script>
     
